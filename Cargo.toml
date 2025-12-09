@@ -1,0 +1,24 @@
+[package]
+name = "xor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+walkdir = "2"
+zstd = { version = "0.13", features = ["zstdmt"] }  # 启用多线程压缩
+aes-gcm = "0.10"
+rand = "0.8"
+pbkdf2 = "0.12"
+sha2 = "0.10"  # 自动使用 SIMD 加速
+anyhow = "1"
+csv = "1"
+chrono = "0.4"
+rayon = "1.10"  # 并行处理库
+crossbeam-channel = "0.5"  # 用于线程间通信
+rusqlite = { version = "0.32", features = ["bundled"] }  # SQLite 数据库
+dirs = "5.0"  # 获取用户目录
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
