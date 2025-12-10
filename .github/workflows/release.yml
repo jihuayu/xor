@@ -283,26 +283,31 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           echo "Updating packages to version $VERSION"
           
-          # 更新主包版本
+          # 使用 Node.js 脚本直接修改 JSON 文件，避免 npm version 的问题
           cd package/npm
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
           
-          # 更新主包中 optionalDependencies 的平台包版本
+          # 更新主包版本
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
             const version = process.env.VERSION;
+            pkg.version = version;
             for (const dep in pkg.optionalDependencies) {
               pkg.optionalDependencies[dep] = version;
             }
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            console.log('✓ Main package updated to', version);
           " VERSION="$VERSION"
           
           # 更新平台包版本
           for platform in win32-x64 win32-arm64 linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
-            cd platform-packages/$platform
-            npm version "$VERSION" --no-git-tag-version --allow-same-version
-            cd ../..
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('platform-packages/$platform/package.json', 'utf8'));
+              pkg.version = process.env.VERSION;
+              fs.writeFileSync('platform-packages/$platform/package.json', JSON.stringify(pkg, null, 2) + '\n');
+              console.log('✓ Platform package $platform updated to', process.env.VERSION);
+            " VERSION="$VERSION" platform="$platform"
           done
           
           echo "✓ All package versions updated to $VERSION"
