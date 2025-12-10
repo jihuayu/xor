@@ -4,7 +4,8 @@ use tempfile::TempDir;
 use xor::db::{Database, FileRecord, LogRecord};
 
 /// 创建临时测试数据库
-fn create_test_db() -> Result<Database> {
+/// 返回数据库和 TempDir，以保持临时目录在测试期间有效
+fn create_test_db() -> Result<(Database, TempDir)> {
     let temp_dir = TempDir::new()?;
     let db_path = temp_dir.path().join("test.db");
 
@@ -12,12 +13,12 @@ fn create_test_db() -> Result<Database> {
     let db = Database { conn };
     db.init_tables()?;
 
-    Ok(db)
+    Ok((db, temp_dir))
 }
 
 #[test]
 fn test_database_creation() -> Result<()> {
-    let _db = create_test_db()?;
+    let (_db, _temp_dir) = create_test_db()?;
 
     // 验证数据库路径可以获取
     let path = Database::get_db_path_string()?;
@@ -28,7 +29,7 @@ fn test_database_creation() -> Result<()> {
 
 #[test]
 fn test_file_record_upsert() -> Result<()> {
-    let db = create_test_db()?;
+    let (db, _temp_dir) = create_test_db()?;
 
     let record = FileRecord {
         id: None,
@@ -58,7 +59,7 @@ fn test_file_record_upsert() -> Result<()> {
 
 #[test]
 fn test_file_record_update() -> Result<()> {
-    let db = create_test_db()?;
+    let (db, _temp_dir) = create_test_db()?;
 
     // 插入初始记录
     let record1 = FileRecord {
@@ -99,7 +100,7 @@ fn test_file_record_update() -> Result<()> {
 
 #[test]
 fn test_batch_upsert_files() -> Result<()> {
-    let mut db = create_test_db()?;
+    let (mut db, _temp_dir) = create_test_db()?;
 
     let records = vec![
         FileRecord {
@@ -149,7 +150,7 @@ fn test_batch_upsert_files() -> Result<()> {
 
 #[test]
 fn test_log_operations() -> Result<()> {
-    let db = create_test_db()?;
+    let (db, _temp_dir) = create_test_db()?;
 
     let log = LogRecord {
         file_path: "test/file.txt".to_string(),
@@ -173,7 +174,7 @@ fn test_log_operations() -> Result<()> {
 
 #[test]
 fn test_batch_add_logs() -> Result<()> {
-    let mut db = create_test_db()?;
+    let (mut db, _temp_dir) = create_test_db()?;
 
     let logs = vec![
         LogRecord {
@@ -211,7 +212,7 @@ fn test_batch_add_logs() -> Result<()> {
 
 #[test]
 fn test_get_all_files() -> Result<()> {
-    let mut db = create_test_db()?;
+    let (mut db, _temp_dir) = create_test_db()?;
 
     // 插入多个文件记录
     let records = vec![
@@ -252,7 +253,7 @@ fn test_get_all_files() -> Result<()> {
 
 #[test]
 fn test_file_not_exists() -> Result<()> {
-    let db = create_test_db()?;
+    let (db, _temp_dir) = create_test_db()?;
 
     // 查询不存在的文件
     let found = db.file_exists("nonexistent.txt")?;
@@ -263,7 +264,7 @@ fn test_file_not_exists() -> Result<()> {
 
 #[test]
 fn test_empty_batch_operations() -> Result<()> {
-    let mut db = create_test_db()?;
+    let (mut db, _temp_dir) = create_test_db()?;
 
     // 空批量操作应该成功
     db.batch_upsert_files(&[])?;
