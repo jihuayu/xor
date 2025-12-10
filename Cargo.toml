@@ -1,8 +1,8 @@
 [package]
-name = "xor"
+name = "hbsx"
 version = "0.1.0"
 authors = ['jihuayu <jihuayu123@gmail.com>']
-description = "a easy-to-use file encryption tool"
+description = "A easy-to-use file encryption tool with compression support"
 homepage = "https://github.com/jihuayu/xor"
 repository = "https://github.com/jihuayu/xor"
 license = "MIT"

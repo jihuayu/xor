@@ -356,6 +356,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "hbsx"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "chrono",
+ "crossbeam-channel",
+ "csv",
+ "dirs",
+ "pbkdf2",
+ "rand",
+ "rayon",
+ "rusqlite",
+ "sha2",
+ "tempfile",
+ "walkdir",
+ "zstd",
+]
+
+[[package]]
 name = "hmac"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1010,26 +1030,6 @@ name = "wit-bindgen"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
-
-[[package]]
-name = "xor"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "chrono",
- "crossbeam-channel",
- "csv",
- "dirs",
- "pbkdf2",
- "rand",
- "rayon",
- "rusqlite",
- "sha2",
- "tempfile",
- "walkdir",
- "zstd",
-]
 
 [[package]]
 name = "zerocopy"
