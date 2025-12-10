@@ -1,6 +1,11 @@
 [package]
 name = "xor"
 version = "0.1.0"
+authors = ['jihuayu <jihuayu123@gmail.com>']
+description = "a easy-to-use file encryption tool"
+homepage = "https://github.com/jihuayu/xor"
+repository = "https://github.com/jihuayu/xor"
+license = "MIT"
 edition = "2024"
 
 [dependencies]
@@ -22,3 +27,5 @@ dirs = "5.0"  # 获取用户目录
 opt-level = 3
 lto = true
 codegen-units = 1
+strip = true
+panic = "abort"
