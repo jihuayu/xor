@@ -33,11 +33,11 @@ function getBinaryPath() {
   // 尝试多个可能的路径
   const possiblePaths = [
     // 从 node_modules 安装的情况
-    path.join(__dirname, '..', packageName, 'bin', 'xor'),
-    path.join(__dirname, '..', packageName, 'bin', 'xor.exe'),
+    path.join(__dirname, '..', packageName, 'bin', 'hbsx'),
+    path.join(__dirname, '..', packageName, 'bin', 'hbsx.exe'),
     // 本地开发情况
-    path.join(__dirname, 'node_modules', packageName, 'bin', 'xor'),
-    path.join(__dirname, 'node_modules', packageName, 'bin', 'xor.exe'),
+    path.join(__dirname, 'node_modules', packageName, 'bin', 'hbsx'),
+    path.join(__dirname, 'node_modules', packageName, 'bin', 'hbsx.exe'),
   ];
 
   for (const binPath of possiblePaths) {
