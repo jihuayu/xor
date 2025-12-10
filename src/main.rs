@@ -1,6 +1,6 @@
 use aes_gcm::{
-    aead::{Aead, KeyInit},
     Aes256Gcm, Key, Nonce,
+    aead::{Aead, KeyInit},
 };
 use anyhow::{Context, Result};
 use csv::Writer;
@@ -93,7 +93,7 @@ fn main() -> Result<()> {
                 Err(e) => {
                     let error_msg = format!("❌ 错误处理 {:?}: {}", file_path, e);
                     eprintln!("{}", error_msg);
-                    
+
                     // 记录错误日志到批量队列
                     if let Ok(relative_path) = file_path.strip_prefix(&*input_path) {
                         let log = LogRecord {
@@ -105,7 +105,7 @@ fn main() -> Result<()> {
                         };
                         pending_logs.lock().unwrap().push(log);
                     }
-                    
+
                     None
                 }
             }
@@ -116,12 +116,12 @@ fn main() -> Result<()> {
     println!("\n💾 正在批量写入数据库...");
     let records_to_write = pending_records.lock().unwrap();
     let logs_to_write = pending_logs.lock().unwrap();
-    
+
     if !records_to_write.is_empty() {
         db.lock().unwrap().batch_upsert_files(&records_to_write)?;
         println!("✅ 已写入 {} 条文件记录", records_to_write.len());
     }
-    
+
     if !logs_to_write.is_empty() {
         db.lock().unwrap().batch_add_logs(&logs_to_write)?;
         println!("✅ 已写入 {} 条日志记录", logs_to_write.len());
@@ -144,16 +144,22 @@ fn main() -> Result<()> {
     println!("\n📋 清单已生成: {}", manifest_path.display());
     println!("🎉 所有文件处理完成！共 {} 个文件", records.len());
     println!("📊 统计信息:");
-    println!("   原始总大小: {} ({} MB)", 
-        format_size(total_original_size), 
-        total_original_size / 1024 / 1024);
-    println!("   输出总大小: {} ({} MB)", 
-        format_size(total_output_size), 
-        total_output_size / 1024 / 1024);
+    println!(
+        "   原始总大小: {} ({} MB)",
+        format_size(total_original_size),
+        total_original_size / 1024 / 1024
+    );
+    println!(
+        "   输出总大小: {} ({} MB)",
+        format_size(total_output_size),
+        total_output_size / 1024 / 1024
+    );
     println!("   压缩率: {:.2}%", compression_ratio);
-    println!("   节省空间: {} ({} MB)", 
+    println!(
+        "   节省空间: {} ({} MB)",
         format_size(total_original_size.saturating_sub(total_output_size)),
-        total_original_size.saturating_sub(total_output_size) / 1024 / 1024);
+        total_original_size.saturating_sub(total_output_size) / 1024 / 1024
+    );
 
     Ok(())
 }
@@ -202,7 +208,7 @@ fn process_file_with_check(
         if existing.modified_time != current_modified_time {
             // 修改时间不同，进一步检查 hash
             let current_hash = compute_file_hash_simd(file_path)?;
-            
+
             if existing.original_hash != current_hash {
                 // Hash 不同，需要重新处理
                 queue_log(
@@ -230,13 +236,7 @@ fn process_file_with_check(
         }
     } else {
         // 数据库中不存在，需要处理
-        queue_log(
-            pending_logs,
-            &relative_path,
-            "check",
-            "new",
-            "新文件",
-        );
+        queue_log(pending_logs, &relative_path, "check", "new", "新文件");
         true
     };
 
@@ -249,7 +249,7 @@ fn process_file_with_check(
         Ok(record) => {
             // 添加到批量写入队列
             pending_records.lock().unwrap().push(record.clone());
-            
+
             // 记录成功日志到队列
             queue_log(
                 pending_logs,
@@ -448,11 +448,22 @@ fn get_modified_time(path: &Path) -> Result<String> {
 fn write_manifest(path: &Path, records: &[FileRecord]) -> Result<()> {
     let mut writer = Writer::from_path(path)?;
 
-    writer.write_record(&["文件路径", "最后修改时间", "原始文件哈希", "输出文件哈希", "原始大小(字节)", "输出大小(字节)", "压缩率"])?;
+    writer.write_record(&[
+        "文件路径",
+        "最后修改时间",
+        "原始文件哈希",
+        "输出文件哈希",
+        "原始大小(字节)",
+        "输出大小(字节)",
+        "压缩率",
+    ])?;
 
     for record in records {
         let compression_ratio = if record.original_size > 0 {
-            format!("{:.2}%", (record.output_size as f64 / record.original_size as f64) * 100.0)
+            format!(
+                "{:.2}%",
+                (record.output_size as f64 / record.original_size as f64) * 100.0
+            )
         } else {
             "N/A".to_string()
         };

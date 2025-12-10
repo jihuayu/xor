@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use std::path::PathBuf;
 
 /// 文件记录
@@ -35,14 +35,14 @@ impl Database {
     /// 创建或打开数据库
     pub fn new() -> Result<Self> {
         let db_path = Self::get_db_path()?;
-        
+
         // 确保目录存在
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
 
-        let conn = Connection::open(&db_path)
-            .context(format!("无法打开数据库: {}", db_path.display()))?;
+        let conn =
+            Connection::open(&db_path).context(format!("无法打开数据库: {}", db_path.display()))?;
 
         let db = Database { conn };
         db.init_tables()?;
@@ -116,7 +116,7 @@ impl Database {
         let mut stmt = self.conn.prepare(
             "SELECT id, relative_path, modified_time, original_hash, output_hash, 
                     COALESCE(original_size, 0), COALESCE(output_size, 0), created_at
-             FROM files WHERE relative_path = ?1"
+             FROM files WHERE relative_path = ?1",
         )?;
 
         let mut rows = stmt.query(params![relative_path])?;
@@ -235,7 +235,7 @@ impl Database {
         {
             let mut stmt = tx.prepare(
                 "INSERT INTO logs (file_path, action, status, message, timestamp)
-                 VALUES (?1, ?2, ?3, ?4, ?5)"
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
             )?;
 
             for log in logs {
@@ -259,7 +259,7 @@ impl Database {
         let mut stmt = self.conn.prepare(
             "SELECT id, relative_path, modified_time, original_hash, output_hash, 
                     COALESCE(original_size, 0), COALESCE(output_size, 0), created_at
-             FROM files ORDER BY relative_path"
+             FROM files ORDER BY relative_path",
         )?;
 
         let rows = stmt.query_map([], |row| {
@@ -288,7 +288,7 @@ impl Database {
     pub fn get_recent_logs(&self, limit: usize) -> Result<Vec<LogRecord>> {
         let mut stmt = self.conn.prepare(
             "SELECT file_path, action, status, message, timestamp 
-             FROM logs ORDER BY timestamp DESC LIMIT ?1"
+             FROM logs ORDER BY timestamp DESC LIMIT ?1",
         )?;
 
         let rows = stmt.query_map(params![limit], |row| {
