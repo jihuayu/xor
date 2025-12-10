@@ -111,9 +111,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            ls -lh target/${{ matrix.target }}/release/xor.exe
+            ls -lh target/${{ matrix.target }}/release/hbsx.exe
           else
-            ls -lh target/${{ matrix.target }}/release/xor
+            ls -lh target/${{ matrix.target }}/release/hbsx
           fi
 
   lint:

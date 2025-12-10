@@ -286,11 +286,17 @@ jobs:
           # 使用 Python 脚本更新所有 package.json 文件
           cd package/npm
           
+          export VERSION
           python3 << 'EOF'
           import json
           import os
+          import sys
           
-          version = os.environ['VERSION']
+          version = os.environ.get('VERSION', '')
+          if not version:
+              print('ERROR: VERSION environment variable is not set')
+              sys.exit(1)
+          
           print(f'Updating to version {version}')
           
           # 更新主包版本
@@ -325,7 +331,14 @@ jobs:
           print(f'✓ All package versions updated to {version}')
           EOF
           
-          VERSION="$VERSION" python3 -c "import os; print(f\"VERSION env var: {os.environ.get('VERSION', 'NOT SET')}\")"
+          # 验证版本更新
+          echo "Verifying version updates..."
+          MAIN_VERSION=$(node -p "require('./package.json').version")
+          if [ "$MAIN_VERSION" != "$VERSION" ]; then
+            echo "ERROR: Main package version mismatch: $MAIN_VERSION != $VERSION"
+            exit 1
+          fi
+          echo "✓ Version verification passed: $VERSION"
 
       - name: Setup npm authentication
         run: |
@@ -341,7 +354,7 @@ jobs:
           for platform in win32-x64 win32-arm64 linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
             echo "Publishing @jihuayu/hbsx-$platform..."
             cd platform-packages/$platform
-            npm publish --access public
+            npm publish --access public || { echo "Failed to publish $platform"; exit 1; }
             cd ../..
           done
 
@@ -349,7 +362,7 @@ jobs:
         run: |
           cd package/npm
           echo "Publishing @jihuayu/hbsx..."
-          npm publish --access public
+          npm publish --access public || { echo "Failed to publish main package"; exit 1; }
 
       - name: Summary
         run: |
