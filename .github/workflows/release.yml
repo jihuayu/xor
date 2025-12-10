@@ -342,9 +342,15 @@ jobs:
 
       - name: Setup npm authentication
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-          echo "always-auth=true" >> ~/.npmrc
+          cat > ~/.npmrc << EOF
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          registry=https://registry.npmjs.org/
+          EOF
+          
+          # 验证 token
+          echo "Verifying npm authentication..."
+          npm whoami || { echo "ERROR: npm authentication failed. Please check NPM_TOKEN secret."; exit 1; }
+          echo "✓ npm authentication successful"
 
       - name: Publish platform packages
         run: |
@@ -354,15 +360,30 @@ jobs:
           for platform in win32-x64 win32-arm64 linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
             echo "Publishing @jihuayu/hbsx-$platform..."
             cd platform-packages/$platform
-            npm publish --access public || { echo "Failed to publish $platform"; exit 1; }
+            
+            # 检查包是否已存在
+            if npm view @jihuayu/hbsx-$platform@${{ needs.create-release.outputs.version }} version 2>/dev/null; then
+              echo "⚠️  Package @jihuayu/hbsx-$platform@${{ needs.create-release.outputs.version }} already exists, skipping..."
+            else
+              npm publish --access public || { echo "❌ Failed to publish $platform"; exit 1; }
+              echo "✓ Published @jihuayu/hbsx-$platform"
+            fi
+            
             cd ../..
           done
 
       - name: Publish main package
         run: |
           cd package/npm
-          echo "Publishing @jihuayu/hbsx..."
-          npm publish --access public || { echo "Failed to publish main package"; exit 1; }
+          
+          # 检查主包是否已存在
+          if npm view @jihuayu/hbsx@${{ needs.create-release.outputs.version }} version 2>/dev/null; then
+            echo "⚠️  Package @jihuayu/hbsx@${{ needs.create-release.outputs.version }} already exists, skipping..."
+          else
+            echo "Publishing @jihuayu/hbsx..."
+            npm publish --access public || { echo "❌ Failed to publish main package"; exit 1; }
+            echo "✓ Published @jihuayu/hbsx"
+          fi
 
       - name: Summary
         run: |
