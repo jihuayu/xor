@@ -1,0 +1,37 @@
+{
+  "name": "@jihuayu/hbsx",
+  "version": "0.1.0",
+  "description": "An easy-to-use file encryption tool",
+  "main": "index.js",
+  "bin": {
+    "xor": "./bin/xor"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "keywords": [
+    "encryption",
+    "file-encryption",
+    "compression",
+    "xor",
+    "security"
+  ],
+  "author": "jihuayu <jihuayu123@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jihuayu/xor.git"
+  },
+  "homepage": "https://github.com/jihuayu/xor",
+  "engines": {
+    "node": ">=14"
+  },
+  "optionalDependencies": {
+    "@jihuayu/hbsx-win32-x64": "0.1.0",
+    "@jihuayu/hbsx-win32-arm64": "0.1.0",
+    "@jihuayu/hbsx-linux-x64": "0.1.0",
+    "@jihuayu/hbsx-linux-arm64": "0.1.0",
+    "@jihuayu/hbsx-darwin-x64": "0.1.0",
+    "@jihuayu/hbsx-darwin-arm64": "0.1.0"
+  }
+}

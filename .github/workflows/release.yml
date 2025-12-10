@@ -77,6 +77,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Update Cargo.toml version
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          echo "Updating Cargo.toml to version $VERSION"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
+          cat Cargo.toml | grep "^version ="
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -191,3 +198,119 @@ jobs:
           asset_path: ./${{ matrix.asset_name }}.zip.sha256
           asset_name: ${{ matrix.asset_name }}.zip.sha256
           asset_content_type: text/plain
+
+      # 保存构建产物用于 npm 发布
+      - name: Upload artifact for npm publishing
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          retention-days: 1
+
+  publish-npm:
+    name: Publish to npm
+    needs: [create-release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          ls -R artifacts/
+
+      - name: Copy binaries to platform packages
+        run: |
+          # 创建 bin 目录
+          mkdir -p package/npm/platform-packages/win32-x64/bin
+          mkdir -p package/npm/platform-packages/win32-arm64/bin
+          mkdir -p package/npm/platform-packages/linux-x64/bin
+          mkdir -p package/npm/platform-packages/linux-arm64/bin
+          mkdir -p package/npm/platform-packages/darwin-x64/bin
+          mkdir -p package/npm/platform-packages/darwin-arm64/bin
+
+          # 复制 Windows 二进制
+          cp artifacts/binary-x86_64-pc-windows-msvc/xor.exe package/npm/platform-packages/win32-x64/bin/
+          cp artifacts/binary-aarch64-pc-windows-msvc/xor.exe package/npm/platform-packages/win32-arm64/bin/
+
+          # 复制 Linux 二进制 (使用 musl 版本作为主要版本)
+          cp artifacts/binary-x86_64-unknown-linux-musl/xor package/npm/platform-packages/linux-x64/bin/
+          cp artifacts/binary-aarch64-unknown-linux-gnu/xor package/npm/platform-packages/linux-arm64/bin/
+
+          # 复制 macOS 二进制
+          cp artifacts/binary-x86_64-apple-darwin/xor package/npm/platform-packages/darwin-x64/bin/
+          cp artifacts/binary-aarch64-apple-darwin/xor package/npm/platform-packages/darwin-arm64/bin/
+
+          # 设置执行权限
+          chmod +x package/npm/platform-packages/*/bin/xor
+
+      - name: Update package versions
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          echo "Updating packages to version $VERSION"
+          
+          # 更新主包版本
+          cd package/npm
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          
+          # 更新主包中 optionalDependencies 的平台包版本
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const version = process.env.VERSION;
+            for (const dep in pkg.optionalDependencies) {
+              pkg.optionalDependencies[dep] = version;
+            }
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          " VERSION="$VERSION"
+          
+          # 更新平台包版本
+          for platform in win32-x64 win32-arm64 linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
+            cd platform-packages/$platform
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            cd ../..
+          done
+          
+          echo "✓ All package versions updated to $VERSION"
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd package/npm
+          
+          # 发布平台包
+          for platform in win32-x64 win32-arm64 linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
+            echo "Publishing @jihuayu/hbsx-$platform..."
+            cd platform-packages/$platform
+            npm publish --access public
+            cd ../..
+          done
+
+      - name: Publish main package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd package/npm
+          echo "Publishing @jihuayu/hbsx..."
+          npm publish --access public
+
+      - name: Summary
+        run: |
+          echo "✓ All npm packages published successfully!"
+          echo "Version: ${{ needs.create-release.outputs.version }}"
+          echo ""
+          echo "Install with:"
+          echo "  npm install -g @jihuayu/hbsx@${{ needs.create-release.outputs.version }}"

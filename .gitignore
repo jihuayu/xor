@@ -1,2 +1,8 @@
 /target
 .idea
+# npm
+package/npm/node_modules/
+package/npm/platform-packages/*/node_modules/
+package/npm/platform-packages/*/bin/
+*.log
+.DS_Store

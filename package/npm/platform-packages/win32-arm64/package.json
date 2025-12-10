@@ -1,0 +1,14 @@
+{
+  "name": "@jihuayu/hbsx-win32-arm64",
+  "version": "0.1.0",
+  "description": "hbsx binary for Windows ARM64",
+  "os": ["win32"],
+  "cpu": ["arm64"],
+  "main": "index.js",
+  "author": "jihuayu <jihuayu123@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jihuayu/xor.git"
+  }
+}

@@ -1,5 +1,36 @@
 # XOR 文件处理工具
 
+## 安装方式
+
+### 通过 npm 安装（推荐）
+
+```bash
+# 全局安装
+npm install -g @jihuayu/hbsx
+
+# 使用 npx（无需安装）
+npx @jihuayu/hbsx [options]
+```
+
+支持的平台：
+- Windows (x64, ARM64)
+- Linux (x64, ARM64)
+- macOS (Intel, Apple Silicon)
+
+### 从源码编译
+
+```bash
+# 克隆仓库
+git clone https://github.com/jihuayu/xor.git
+cd xor
+
+# 编译
+cargo build --release
+
+# 运行
+./target/release/xor
+```
+
 ## 功能特性
 
 - 🔐 **AES-256-GCM 加密**: 使用 PBKDF2-HMAC-SHA256 从密码派生密钥
