@@ -22,12 +22,12 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
 
@@ -165,27 +165,15 @@ jobs:
           cd target/${{ matrix.target }}/release
           Compress-Archive -Path ${{ matrix.artifact_name }} -DestinationPath ../../../${{ matrix.asset_name }}.zip
 
-      - name: Upload Release Asset (Linux and macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-release-asset@v1
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.tar.gz
-          asset_name: ${{ matrix.asset_name }}.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload Release Asset (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.zip
-          asset_name: ${{ matrix.asset_name }}.zip
-          asset_content_type: application/zip
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ${{ matrix.asset_name }}.tar.gz
+            ${{ matrix.asset_name }}.zip
 
       - name: Generate SHA256 checksums (Linux and macOS)
         if: matrix.os != 'windows-latest'
@@ -199,27 +187,15 @@ jobs:
           $hash = (Get-FileHash -Path ${{ matrix.asset_name }}.zip -Algorithm SHA256).Hash.ToLower()
           "$hash  ${{ matrix.asset_name }}.zip" | Out-File -FilePath ${{ matrix.asset_name }}.zip.sha256 -Encoding utf8 -NoNewline
 
-      - name: Upload SHA256 checksum (Linux and macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-release-asset@v1
+      - name: Upload SHA256 checksums
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.tar.gz.sha256
-          asset_name: ${{ matrix.asset_name }}.tar.gz.sha256
-          asset_content_type: text/plain
-
-      - name: Upload SHA256 checksum (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.zip.sha256
-          asset_name: ${{ matrix.asset_name }}.zip.sha256
-          asset_content_type: text/plain
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ${{ matrix.asset_name }}.tar.gz.sha256
+            ${{ matrix.asset_name }}.zip.sha256
 
       # 保存构建产物用于 npm 发布
       - name: Upload artifact for npm publishing
