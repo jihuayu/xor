@@ -242,6 +242,8 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+          scope: '@jihuayu'
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -342,14 +344,28 @@ jobs:
 
       - name: Setup npm authentication
         run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "ERROR: NPM_TOKEN secret is not set."
+            exit 1
+          fi
+
           cat > ~/.npmrc << EOF
-          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          registry=https://registry.npmjs.org/
-          EOF
-          
-          # 验证 token
+//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+registry=https://registry.npmjs.org/
+always-auth=true
+@jihuayu:registry=https://registry.npmjs.org/
+EOF
+
           echo "Verifying npm authentication..."
-          npm whoami || { echo "ERROR: npm authentication failed. Please check NPM_TOKEN secret."; exit 1; }
+          if ! npm whoami >/dev/null 2>&1; then
+            echo "ERROR: npm authentication failed. The NPM_TOKEN may be invalid or expired."
+            echo "Please create a new npm Automation token and update the GitHub secret NPM_TOKEN."
+            exit 1
+          fi
+          if ! npm ping >/dev/null 2>&1; then
+            echo "ERROR: npm registry ping failed. Check network or token permissions."
+            exit 1
+          fi
           echo "✓ npm authentication successful"
 
       - name: Publish platform packages
